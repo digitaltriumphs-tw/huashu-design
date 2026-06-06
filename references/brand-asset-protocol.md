@@ -69,18 +69,33 @@
 
 **3.1 Logo（任何品牌必需）**
 
-三条路径按成功率递减：
-1. 独立 SVG/PNG 文件（最理想）：
+> ⚠️ **别只试 `curl <brand>.com/logo.svg` 就放弃**——现在的官网大多是 SPA，直连静态路径基本返回空壳 HTML（2026-06-06 实测 Trae 官网 5 条直连路径全是空壳）。**数字产品 / SaaS / AI 工具优先用图标聚合源**，命中率最高、直出干净 SVG。
+
+按成功率递减：
+0. **图标聚合源（知名数字产品/SaaS/AI 工具首选，命中率最高）**：
    ```bash
-   curl -o assets/<brand>-brand/logo.svg https://<brand>.com/logo.svg
-   curl -o assets/<brand>-brand/logo-white.svg https://<brand>.com/logo-white.svg
+   unset ALL_PROXY HTTP_PROXY HTTPS_PROXY all_proxy http_proxy https_proxy   # 清代理，否则 TLS 易炸
+   # svgl —— AI/开发者品牌覆盖最全（Claude/Cursor/OpenAI/Copilot/Anthropic/Vercel…），含 light/dark + wordmark
+   curl -s "https://api.svgl.app?search=<brand>"   # 返回 JSON，取 route(.light/.dark) 的 svg URL 再下载
+   # simpleicons —— 单色 glyph，可直接按品牌色上色
+   curl -o logo.svg "https://cdn.simpleicons.org/<slug>/<hexcolor>"
    ```
-2. 官网 HTML 全文提取 inline SVG（80% 场景必用）：
+1. 独立 SVG/PNG 文件 / 官方 brand 页（如 `<brand>.com/brand`、`/press`）：
+   ```bash
+   curl -A "Mozilla/5.0" -L -o assets/<brand>-brand/logo.svg "<official-logo-url>"
+   ```
+2. 官网 HTML 全文提取 inline SVG：
    ```bash
    curl -A "Mozilla/5.0" -L https://<brand>.com -o assets/<brand>-brand/homepage.html
    # 然后 grep <svg>...</svg> 提取 logo 节点
    ```
-3. 官方社交媒体 avatar（最后手段）：GitHub/Twitter/LinkedIn 的公司头像通常是 400×400 或 800×800 透明底 PNG
+3. **Google favicon 服务（站点真实 mark 兜底，几乎不失败）**：
+   ```bash
+   curl -o logo.png "https://www.google.com/s2/favicons?domain=<brand-domain>&sz=256"   # 256px 官方站点图标
+   ```
+4. 官方社交媒体 avatar（最后手段）：GitHub/Twitter/LinkedIn 的公司头像通常是 400×400 或 800×800 透明底 PNG
+
+下载后**逐个核对**：`file <logo>` 确认是真 SVG/PNG（不是 106 字节占位或 HTML 空壳），`head -c 90 <logo.svg>` 看是否 `<svg`。
 
 **3.2 产品图/渲染图（实体产品必需）**
 
@@ -222,6 +237,7 @@ curl -A "Mozilla/5.0" -L "<hero-image-url>" -o assets/<brand>-brand/product-hero
 - **Lovart 设计**：把产品截图里演示品牌的喜茶红当成 Lovart 自己的色——差点毁整个设计
 - **DJI Pocket 4 发布动画（2026-04-20，触发本协议升级的真实案例）**：走了旧版只抽色值的协议，没下载 DJI logo、没找 Pocket 4 产品图，用 CSS 剪影代替产品——做出来是「通用黑底+橙 accent 的科技动画」，没有大疆识别度。花叔原话：「否则，我们在表达什么呢？」→ 协议升级。
 - 抽完色没写进 brand-spec.md，第三页就忘了主色数值，临场加了个「接近但不是」的 hex——品牌一致性崩溃
+- **五大 Coding Agent 对比 PPT（2026-06-06，触发触发条件扩展的真实案例）**：agent 把任务判成「PPT + 没风格参考」走 Fallback 设计方向顾问，只抽了五家品牌色就 spawn 三套设计逻辑，**五个产品 logo（Claude Code / Cursor / Codex / Copilot / Trae）一个没取**——被花叔抓现行「我们为什么没去取这些产品的 logo」。根因：把「对比 / 榜单 deck」误判为不触发 §1.a（以为 §1.a 只管「为单一客户做物料」），且 Fallback 路径里没有任何 logo 检查点。→ 修复：①触发条件扩成两类（含「设计里点名/并列真实产品」）②Fallback 不豁免取 logo ③Phase 3.5 加「具名产品 logo 子门」spawn 前必过 ④Step 3.1 补 svgl/simpleicons/Google favicon 可靠取图链。
 
 ##### 协议代价 vs 不做代价
 
